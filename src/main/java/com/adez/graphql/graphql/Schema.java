@@ -52,7 +52,7 @@ public class Schema {
     private GraphQLObjectType connectionFromCompanyToDepartmentList;
     
     //Department ConnectionType
-    private GraphQLObjectType connectionFromDepartmentUserList;
+    private GraphQLObjectType connectionFromDepartmentToUserList;
     
     private GraphQLInterfaceType nodeInterface;
     
@@ -64,8 +64,8 @@ public class Schema {
     private GraphQLObjectType todoEdge;
     
     //Lists for connections
+    private List<CompanyDto> companys;
     private List<DepartmentDto> departments;
-    private List<UserDto> users;
     private List<TodoDto> todos;
 
     private UserDto activeUser;
@@ -79,12 +79,10 @@ public class Schema {
     
     //User Connections
     private SimpleListConnection simpleConnectionFromUserToTodo;
+    private SimpleListConnection simpleConnectionFromUserToCompany;
     
     //Company Connection
     private SimpleListConnection simpleConnectionFromCompanyToDepartment;
-    
-    //Department Connection
-    private SimpleListConnection simpleConnectionFromDepartmentToUser;
 
     private Relay relay = new Relay();
 
@@ -97,8 +95,8 @@ public class Schema {
         TypeResolverProxy typeResolverProxy = new TypeResolverProxy();
         nodeInterface = relay.nodeInterface(typeResolverProxy);
         
+        simpleConnectionFromUserToCompany = new SimpleListConnection(companys);
         simpleConnectionFromUserToTodo = new SimpleListConnection(todos);
-        simpleConnectionFromDepartmentToUser = new SimpleListConnection(users);
         simpleConnectionFromCompanyToDepartment = new SimpleListConnection(departments);
         
         createAddressType();
@@ -200,20 +198,6 @@ public class Schema {
                 .build();
     }
     
-    private Object getDepartmentDataFetcher(DataFetchingEnvironment environment){
-    	CompanyDto company = (CompanyDto) environment.getSource();
-        departments = new ArrayList<DepartmentDto>();
-    	if(activeUser.getDepartments() != null){
-    		for(int i = 0; i < activeUser.getDepartments().size(); i++){
-    			if(activeUser.getDepartments().get(i).getCompany().getId().equals(company.getId())){
-    				departments.add(activeUser.getDepartments().get(i));
-    			}
-    		}
-    	}
-    	SimpleListConnection departmentDataFetcher = new SimpleListConnection(departments);
-    	return departmentDataFetcher.get(environment);
-    }
-    
     private void createCompanyType(){
     	companyType = newObject()
                 .name("Company")
@@ -249,42 +233,9 @@ public class Schema {
                 .field(newFieldDefinition()
                         .name("organisationNumber")
                         .type(Scalars.GraphQLString)
-                        .build())
-                .field(newFieldDefinition()
-                        .name("departmentList")
-                        .type(connectionFromCompanyToDepartmentList)
-                        .argument(relay.getConnectionFieldArguments())
-                        .dataFetcher(environment -> {return getDepartmentDataFetcher(environment);
-                        })
-                        .build())
-//                .field(newFieldDefinition()
-//                        .name("company")
-//                        .type(new GraphQLTypeReference("Company"))
-//                        .build())
-//                .field(newFieldDefinition()
-//                        .name("affiliateList")
-//                        .type(new GraphQLTypeReference("Company"))
-//                        .build()) 
-//                .field(newFieldDefinition()
-//                        .name("companyImage")
-//                        .type(Scalars.GraphQLString)
-//                        .build())                         
+                        .build())                        
                 .withInterface(nodeInterface)
                 .build();
-    }
-    
-    private Object getLicensDataFetcher(DataFetchingEnvironment environment){
-    	DepartmentDto department = (DepartmentDto) environment.getSource();
-    	licenses = new ArrayList<LicensDto>();
-    	if(activeUser.getActivatedLicensList() != null){
-    		for(int i = 0; i < activeUser.getActivatedLicensList().size(); i++){
-    			if(activeUser.getActivatedLicensList().get(i).getLicens().getDepartment().getId().equals(department.getId())){
-    				licenses.add(activeUser.getActivatedLicensList().get(i).getLicens());
-    			}
-    		}
-    	}
-    	SimpleListConnection licensDataFetcher = new SimpleListConnection(licenses);
-    	return licensDataFetcher.get(environment);
     }
     
     private void createDepartmentType(){
@@ -323,48 +274,37 @@ public class Schema {
                         .name("departmentAddress")
                         .type(addressType)
                         .build())
-                .field(newFieldDefinition()
-                        .name("licensList")
-                        .type(connectionFromDepartmentToLicensList)
-                        .argument(relay.getConnectionFieldArguments())
-                        .dataFetcher(environment -> {return getLicensDataFetcher(environment);
-                        })
-                        .build())
-                .field(newFieldDefinition()
-                        .name("departmentImage")
-                        .type(Scalars.GraphQLString)
-                        .build())
                 .withInterface(nodeInterface)
                 .build();
     }
     
     private Object getTodoDataFetcher(DataFetchingEnvironment environment){
-    	events = new ArrayList<EventDto>();
-    	if(eventService.getByUser(activeUser) != null){
+    	todos = new ArrayList<TodoDto>();
+    	if(todoService.getByUser(activeUser) != null){
 	    	if(environment.getArgument("fromDate") != null && environment.getArgument("toDate") != null){
 	    		String fromDate = environment.getArgument("fromDate");
 	    		String toDate = environment.getArgument("toDate");
-	    		if(eventService.getByDate(activeUser, fromDate, toDate) != null)
-	    			events = eventService.getByDate(activeUser, fromDate, toDate);
+	    		if(todoService.getByDate(activeUser, fromDate, toDate) != null)
+	    			todos = todoService.getByDate(activeUser, fromDate, toDate);
 	    	}
 	    	else if(environment.getArgument("fromDate") != null){
 	    		String fromDate = environment.getArgument("fromDate");
-	    		if(eventService.getFromDate(activeUser, fromDate) != null)
-	    			events = eventService.getFromDate(activeUser, fromDate);
+	    		if(todoService.getFromDate(activeUser, fromDate) != null)
+	    			todos = todoService.getFromDate(activeUser, fromDate);
 	    	}
 	    	else if(environment.getArgument("toDate") != null){
 	    		String toDate = environment.getArgument("toDate");
-	    		if(eventService.getToDate(activeUser, toDate) != null)
-	    			events = eventService.getToDate(activeUser, toDate);
+	    		if(todoService.getToDate(activeUser, toDate) != null)
+	    			todos = todoService.getToDate(activeUser, toDate);
 	    	}
 	    	else{
-	    		if(eventService.getByUser(activeUser) != null)
-	    			events = eventService.getByUser(activeUser);
+	    		if(todoService.getByUser(activeUser) != null)
+	    			todos = todoService.getByUser(activeUser);
 	    	}
     	}
     	
-    	SimpleListConnection eventDataFetcher = new SimpleListConnection(events);
-    	return eventDataFetcher.get(environment);
+    	SimpleListConnection todoDataFetcher = new SimpleListConnection(todos);
+    	return todoDataFetcher.get(environment);
     }
     
     private void createUserType() {
@@ -414,76 +354,14 @@ public class Schema {
                         .type(addressType)
                         .build())
                 .field(newFieldDefinition()
-                        .name("token")
-                        .type(Scalars.GraphQLString)
-                        .build())
-                .field(newFieldDefinition()
-                        .name("authenticated")
-                        .type(Scalars.GraphQLBoolean)
-                        .build())
-                .field(newFieldDefinition()
-                        .name("authorities")
-                        .type(Scalars.GraphQLString)
-                        .build())
-                .field(newFieldDefinition()
-                        .name("goalList")
-                        .type(Scalars.GraphQLString)
-                        .build())                        
-                .field(newFieldDefinition()
-                        .name("language")
-                        .type(Scalars.GraphQLString)
-                        .build())
-                .field(newFieldDefinition()
-                		.name("imageList")
-                        .type(connectionFromUserToImageList)
-                        .argument(relay.getConnectionFieldArguments())
-                        .dataFetcher(environment -> {return getImageDataFetcher(environment);
-                        })
-                        .build())
-                .field(newFieldDefinition()
-                        .name("eventList")
-                        .type(connectionFromUserToEventList)
-                        .argument(createEventArguemntList())
-                        .dataFetcher(environment -> {return getEventDataFetcher(environment);
-                        })
-                        .build())
-                .field(newFieldDefinition()
-                        .name("resultList")
-                        .type(connectionFromUserToResultList)
-                        .argument(createResultArguemntList())
-                        .dataFetcher(environment -> {return getResultDataFetcher(environment);
-                        })
-                        .build())
-                .field(newFieldDefinition()
-                        .name("companyList")
-                        .type(connectionFromUserToCompanyList)
-                        .argument(relay.getConnectionFieldArguments())
-                        .dataFetcher(environment -> {return getCompanyDataFetcher(environment);
-                        })
-                        .build())
-                .field(newFieldDefinition()
-                        .name("activatedLicensList")
-                        .type(connectionFromUserToActivatedLicensList)
-                        .argument(relay.getConnectionFieldArguments())
-                        .dataFetcher(environment -> {return getActivatedLicensDataFetcher(environment);
-                        })
-                        .build())
-                .field(newFieldDefinition()
-                        .name("productList")
-                        .type(connectionFromUserToProductList)
-                        .argument(relay.getConnectionFieldArguments())
-                        .dataFetcher(environment -> {return getProductDataFetcher(environment);
+                        .name("todoList")
+                        .type(connectionFromUserToTodoList)
+                        .argument(createTodoArguemntList())
+                        .dataFetcher(environment -> {return getTodoDataFetcher(environment);
                         })
                         .build())
                 .withInterface(nodeInterface)
                 .build();
-    }
-    
-    private List <GraphQLArgument> createTodoArguemntList(){
-	    List <GraphQLArgument> arguemntList = relay.getConnectionFieldArguments();
-	    arguemntList.add(new GraphQLArgument("fromDate", "fromDate", Scalars.GraphQLString, "all"));
-	    arguemntList.add(new GraphQLArgument("toDate", "toDate", Scalars.GraphQLString, "all"));
-	    return arguemntList;
     }
     
     private List <GraphQLArgument> createTodoArguemntList(){
@@ -494,14 +372,14 @@ public class Schema {
     }
 
     private void createTodoType() {
-        eventType = newObject()
-                .name("Event")
+        todoType = newObject()
+                .name("Todo")
                 .field(newFieldDefinition()
                         .name("id")
                         .type(new GraphQLNonNull(GraphQLID))
                         .dataFetcher(environment -> {
-                                    EventDto event = (EventDto) environment.getSource();
-                                    return relay.toGlobalId("Event", event.getId().toString());
+                                    TodoDto todo = (TodoDto) environment.getSource();
+                                    return relay.toGlobalId("Todo", todo.getId().toString());
                                 }
                         )
                         .build())
@@ -510,20 +388,12 @@ public class Schema {
                         .type(new GraphQLTypeReference("User"))
                         .build())
                 .field(newFieldDefinition()
-                        .name("category")
-                        .type(categoryType)
+                        .name("title")
+                        .type(Scalars.GraphQLString)
                         .build())
                 .field(newFieldDefinition()
-                        .name("motivation")
-                        .type(Scalars.GraphQLFloat)
-                        .build())
-                .field(newFieldDefinition()
-                        .name("reaction")
-                        .type(Scalars.GraphQLFloat)
-                        .build())
-                .field(newFieldDefinition()
-                        .name("result")
-                        .type(Scalars.GraphQLFloat)
+                        .name("description")
+                        .type(Scalars.GraphQLString)
                         .build())
                 .field(newFieldDefinition()
                         .name("createDate")
@@ -533,32 +403,8 @@ public class Schema {
                         .name("finishDate")
                         .type(Scalars.GraphQLString)
                         .build())
-                .field(newFieldDefinition()
-                        .name("createNote")
-                        .type(Scalars.GraphQLString)
-                        .build())
-                .field(newFieldDefinition()
-                        .name("finishNote")
-                        .type(Scalars.GraphQLString)
-                        .build())
                  .field(newFieldDefinition()
-                        .name("isFinished")
-                        .type(Scalars.GraphQLBoolean)
-                        .build())
-                .field(newFieldDefinition()
-                        .name("tagList")
-                        .type(Scalars.GraphQLString)
-                        .build())
-                .field(newFieldDefinition()
-                        .name("unitList")
-                        .type(Scalars.GraphQLString)
-                        .build())
-                .field(newFieldDefinition()
-                        .name("ImageList")
-                        .type(Scalars.GraphQLString)
-                        .build()) 
-                .field(newFieldDefinition()
-                        .name("unplanned")
+                        .name("isDone")
                         .type(Scalars.GraphQLBoolean)
                         .build())
                 .withInterface(nodeInterface)
@@ -566,13 +412,13 @@ public class Schema {
     }
     
     private void createConnectionFromUserToTodoList() {
-        eventEdge = relay.edgeType("Event", eventType, nodeInterface, Collections.<GraphQLFieldDefinition>emptyList());
+        todoEdge = relay.edgeType("Todo", todoType, nodeInterface, Collections.<GraphQLFieldDefinition>emptyList());
         GraphQLFieldDefinition completed = newFieldDefinition()
-                .name("completed")
+        		.name("completed")
                 .type(Scalars.GraphQLBoolean)
                 .dataFetcher(environment -> {
                     Connection connection = (Connection) environment.getSource();
-                    return (int) connection.getEdges().stream().filter(edge -> ((EventDto) edge.getNode()).isFinished()).count();
+                    return (int) connection.getEdges().stream().filter(edge -> ((TodoDto) edge.getNode()).isDone()).count();
                 })
                 .build();
         GraphQLFieldDefinition all = newFieldDefinition()
@@ -583,7 +429,7 @@ public class Schema {
                     return (int) connection.getEdges().size();
                 })
                 .build();
-        connectionFromUserToEventList = relay.connectionType("Event", eventEdge, Arrays.asList(completed, all));
+        connectionFromUserToTodoList = relay.connectionType("Todo", todoEdge, Arrays.asList(completed, all));
     }
     
     private void createConnectionFromCompanyToDepartmentList() {
@@ -600,7 +446,7 @@ public class Schema {
     }
     
     private void createConnectionFromDepartmentToUserList() {
-        departmentEdge = relay.edgeType("Department", departmentType, nodeInterface, Collections.<GraphQLFieldDefinition>emptyList());
+        userEdge = relay.edgeType("User", userType, nodeInterface, Collections.<GraphQLFieldDefinition>emptyList());
         GraphQLFieldDefinition all = newFieldDefinition()
                 .name("all")
                 .type(Scalars.GraphQLInt)
@@ -609,18 +455,18 @@ public class Schema {
                     return (int) connection.getEdges().size();
                 })
                 .build();
-        connectionFromCompanyToDepartmentList = relay.connectionType("Department", departmentEdge, Arrays.asList(all));
+        connectionFromDepartmentToUserList = relay.connectionType("User", userEdge, Arrays.asList(all));
     }
     
     public SimpleListConnection getSimpleConnectionFromUserToTodo() {
-        return new SimpleListConnection(eventService.getByUser(activeUser));
+        return new SimpleListConnection(todoService.getByUser(activeUser));
+    }
+    
+    public SimpleListConnection getSimpleConnectionFromUserToCompany() {
+        return new SimpleListConnection(companyService.getByUser(activeUser));
     }
     
     public SimpleListConnection getSimpleConnectionFromCompanyToDepartment() {
-        return new SimpleListConnection(activeUser.getDepartments());
-    }
-    
-    public SimpleListConnection getSimpleConnectionFromDepartmentToUser() {
         return new SimpleListConnection(activeUser.getDepartments());
     }
     

@@ -1,5 +1,7 @@
 package com.adez.graphql.model.dto;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class TodoDto {
@@ -9,9 +11,9 @@ public class TodoDto {
 	
 	String description;
 	
-	Date createDate;
+	String createDate;
 	
-	Date finishDate;
+	String finishDate;
 	
 	Boolean isDone;
 	
@@ -20,7 +22,7 @@ public class TodoDto {
 	public TodoDto(){
 	}
 	
-	public TodoDto(String title, String description, Date createDate, UserDto user){
+	public TodoDto(String title, String description, String createDate, UserDto user){
 		this.title = title;
 		this.description = description;
 		this.createDate = createDate;
@@ -28,7 +30,7 @@ public class TodoDto {
 		this.user = user;
 	}
 	
-	public TodoDto(String title, String description, Date createDate, Date finishDate, Boolean isDone, UserDto user){
+	public TodoDto(String title, String description, String createDate, String finishDate, Boolean isDone, UserDto user){
 		this.title = title;
 		this.description = description;
 		this.createDate = createDate;
@@ -61,20 +63,38 @@ public class TodoDto {
 		this.description = description;
 	}
 
-	public Date getCreateDate() {
+	public String getCreateDate() {
 		return createDate;
 	}
-
-	public void setCreateDate(Date createDate) {
+	
+	public void setCreateDate(String createDate) {
 		this.createDate = createDate;
 	}
 
-	public Date getFinishDate() {
+	public void setCreateDate(Date createDate) {
+		if(createDate != null){
+			DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			this.createDate = formatter.format(createDate);
+		}
+		else
+			this.createDate = null;
+	}
+
+	public String getFinishDate() {
 		return finishDate;
 	}
 
-	public void setFinishDate(Date finishDate) {
+	public void setFinishDate(String finishDate) {
 		this.finishDate = finishDate;
+	}
+	
+	public void setFinishDate(Date finishDate) {
+		if(finishDate != null){
+			DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			this.finishDate = formatter.format(finishDate);
+		}
+		else
+			this.finishDate = null;
 	}
 
 	public Boolean getIsDone() {

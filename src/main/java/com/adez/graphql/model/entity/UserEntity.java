@@ -1,5 +1,7 @@
 package com.adez.graphql.model.entity;
 
+import java.util.List;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -8,9 +10,12 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
+
+import se.up2u.flowkeeper.model.entity.DepartmentEntity;
 
 @Entity
 @Table(name ="users")
@@ -40,6 +45,9 @@ public class UserEntity {
 	@ManyToOne(optional=true, fetch=FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name="address_id", referencedColumnName="address_id")
 	private AddressEntity address;
+	
+	@ManyToMany(mappedBy="userList", fetch=FetchType.EAGER)
+	private List<DepartmentEntity> departmentList;
 	
 	public UserEntity() {
 	}
@@ -125,6 +133,18 @@ public class UserEntity {
 	
 	public void setAddress(AddressEntity address){
 		this.address = address;
+	}
+	
+	public List<DepartmentEntity> getDepartments(){
+		return departmentList;
+	}
+	
+	public void setDepartments(List<DepartmentEntity> departmentList){
+		this.departmentList = departmentList;
+	}
+	
+	public void addDepartment(DepartmentEntity department){
+		departmentList.add(department);
 	}
 
 	@Override

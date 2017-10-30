@@ -16,6 +16,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
+import se.up2u.flowkeeper.model.entity.CompanyEntity;
+
 @Entity
 @Table(name ="department")
 public class DepartmentEntity {
@@ -113,6 +115,14 @@ public class DepartmentEntity {
 	
 	public void setDepartmentPhoneNumber(String phoneNumber){
 		this.departmentPhoneNumber = phoneNumber;
+	}
+	
+	public CompanyEntity getCompany() {
+		return company;
+	}
+
+	public void setCompany(CompanyEntity company) {
+		this.company = company;
 	}
 	
 	public List<UserEntity> getUsers(){

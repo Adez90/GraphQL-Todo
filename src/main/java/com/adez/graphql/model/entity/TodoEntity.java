@@ -1,5 +1,8 @@
 package com.adez.graphql.model.entity;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -89,16 +92,34 @@ public class TodoEntity {
 		return createDate;
 	}
 
-	public void setCreateDate(Date createDate) {
-		this.createDate = createDate;
+	public void setCreateDate(String stringCreateDate) {
+		if(stringCreateDate != null){
+			try {
+				DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				createDate = formatter.parse(stringCreateDate);
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
+		else
+			createDate = null;
 	}
 
 	public Date getFinishDate() {
 		return finishDate;
 	}
 
-	public void setFinishDate(Date finishDate) {
-		this.finishDate = finishDate;
+	public void setFinishDate(String stringFinishDate) {
+		if(stringFinishDate != null){
+			try {
+				DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				finishDate = formatter.parse(stringFinishDate);
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
+		else
+			finishDate = null;
 	}
 
 	public Boolean getIsDone() {

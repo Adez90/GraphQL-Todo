@@ -1,5 +1,8 @@
 package com.adez.graphql.model.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class UserDto {
 	private Long id;
@@ -17,6 +20,8 @@ public class UserDto {
 	private String phoneNumber;
 	
 	private AddressDto address;
+	
+	private List<DepartmentDto> departmentList;
 	
 	public UserDto() {
 	}
@@ -115,6 +120,24 @@ public class UserDto {
 	
 	public void setAddress(AddressDto address){
 		this.address = address;
+	}
+	
+	public List<DepartmentDto> getDepartments(){
+		return departmentList;
+	}
+	
+	public void setDepartments(List<DepartmentDto> departmentList){
+		this.departmentList = departmentList;
+	}
+	
+	public void addDepartment(DepartmentDto department){
+		if(departmentList != null){
+			departmentList.add(department);
+		}
+		else{
+			departmentList = new ArrayList<DepartmentDto>();
+			departmentList.add(department);
+		}
 	}
 
 	@Override

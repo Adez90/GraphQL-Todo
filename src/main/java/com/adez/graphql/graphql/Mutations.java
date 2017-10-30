@@ -20,12 +20,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.adez.graphql.graphql.interfaceimpl.Edge;
 import com.adez.graphql.model.dto.AddressDto;
 import com.adez.graphql.model.dto.CompanyDto;
 import com.adez.graphql.model.dto.DepartmentDto;
+import com.adez.graphql.model.dto.TodoDto;
 import com.adez.graphql.model.dto.UserDto;
+import com.adez.graphql.service.AddressService;
+import com.adez.graphql.service.CompanyService;
+import com.adez.graphql.service.DepartmentService;
+import com.adez.graphql.service.TodoService;
+import com.adez.graphql.service.UserService;
 
 public class Mutations {
+	private AddressService addressService = new AddressService();
+    private CompanyService companyService = new CompanyService();
+    private DepartmentService departmentService = new DepartmentService();
+    private TodoService todoService = new TodoService();
+    private UserService userService = new UserService();
+    
 	private GraphQLFieldDefinition createAddress;
 	private GraphQLFieldDefinition createCompany;
 	private GraphQLFieldDefinition createDepartment;
@@ -405,18 +418,13 @@ public class Mutations {
     }
 	
 	private void createTodoMutation() {
-        GraphQLInputObjectField categoryIdField = newInputObjectField()
-                .name("categoryId")
-                .type(new GraphQLNonNull(GraphQLID))
+		GraphQLInputObjectField titleField = newInputObjectField()
+                .name("title")
+                .type(Scalars.GraphQLString)
                 .build();
         
-        GraphQLInputObjectField motivationField = newInputObjectField()
-                .name("motivation")
-                .type(Scalars.GraphQLFloat)
-                .build();
-        
-        GraphQLInputObjectField createNoteField = newInputObjectField()
-                .name("createNote")
+        GraphQLInputObjectField descriptionField = newInputObjectField()
+                .name("descriptionNote")
                 .type(Scalars.GraphQLString)
                 .build();
         
@@ -429,22 +437,17 @@ public class Mutations {
                 .name("userId")
                 .type(new GraphQLNonNull(GraphQLID))
                 .build();
-        
-        GraphQLInputObjectField unplannedField = newInputObjectField()
-                .name("unplanned")
-                .type(Scalars.GraphQLBoolean)
-                .build();
 
-        List<GraphQLInputObjectField> inputFields = Arrays.asList(categoryIdField, motivationField, createNoteField, createDateField, userIdField, unplannedField);
+        List<GraphQLInputObjectField> inputFields = Arrays.asList(titleField, descriptionField, createDateField, userIdField);
         
-        GraphQLFieldDefinition eventEdge = newFieldDefinition()
-                .name("eventEdge")
-                .type(schema.getEventEdge())
+        GraphQLFieldDefinition todoEdge = newFieldDefinition()
+                .name("todoEdge")
+                .type(schema.getTodoEdge())
                 .dataFetcher(environment -> {
                     Map source = (Map) environment.getSource();
-                    String eventId = (String) source.get("eventId");
-                    EventDto event = schema.getEvent(eventId);
-                    String stringCreateDate = event.getCreateDate();
+                    String todoId = (String) source.get("todoId");
+                    TodoDto todo = schema.getTodo(todoId);
+                    String stringCreateDate = todo.getCreateDate();
                     Date createDate = null;
                     try {
         				DateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
@@ -455,37 +458,34 @@ public class Mutations {
                     if(createDate!= null){
                     	DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	                    stringCreateDate = formatter.format(createDate);
-	                    event.setCreateDate(stringCreateDate);
+	                    todo.setCreateDate(stringCreateDate);
                     }
-                    schema.setEventList(event.getUser().getEmail());
-                    return new Edge(event, schema.getSimpleConnectionFromUserToEvent().cursorForObjectInConnection(event));
+                    schema.setTodoList(todo.getUser().getEmail());
+                    return new Edge(todo, schema.getSimpleConnectionFromUserToTodo().cursorForObjectInConnection(todo));
                 })
                 .build();
 
-        List<GraphQLFieldDefinition> outputFields = Arrays.asList(getViewerField(), eventEdge);
+        List<GraphQLFieldDefinition> outputFields = Arrays.asList(getViewerField(), todoEdge);
 
         DataFetcher mutate = environment -> {
             Map<String, Object> input = environment.getArgument("input");
-            String categoryId = (String) input.get("categoryId");
-            Double motivation = (Double) input.get("motivation");
-            String createEventNote = (String) input.get("createNote");
+            String title = (String) input.get("title");
+            String description = (String) input.get("description");
             String stringCreateDate = (String) input.get("createDate");
-            Boolean unplanned = (Boolean) input.get("unplanned");
             
             String graphQLUserId = (String) input.get("userId");
             String userId = schema.getRelay().fromGlobalId(graphQLUserId).getId();
-            EventDto event = new EventDto(schema.getActiveUser(userId), categoryService.getById(Long.parseLong(categoryId)), motivation, stringCreateDate, createEventNote, unplanned);
-            event.isFinished(false);
-            event = eventService.save(event);
-            schema.setEventList(event.getUser().getEmail());
-            String eventId = String.valueOf(event.getId());
+            TodoDto todo = new TodoDto(title, description, stringCreateDate, schema.getActiveUser(userId));
+            todo = todoService.save(todo);
+            schema.setTodoList(todo.getUser().getEmail());
+            String todoId = String.valueOf(todo.getId());
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("clientMutationId", (String) input.get("clientMutationId"));
-            result.put("eventId", eventId);
+            result.put("todoId", todoId);
             return result;
         };
         
-        createEvent = schema.getRelay().mutationWithClientMutationId("CreateEvent", "createEvent", inputFields, outputFields, mutate);
+        createTodo = schema.getRelay().mutationWithClientMutationId("CreateTodo", "createTodo", inputFields, outputFields, mutate);
     }
 	
 	private void createUserMutation() {
@@ -538,23 +538,8 @@ public class Mutations {
                 .name("country")
                 .type(Scalars.GraphQLString)
                 .build();
-        
-        GraphQLInputObjectField tokenField = newInputObjectField()
-                .name("token")
-                .type(Scalars.GraphQLString)
-                .build();
-        
-        GraphQLInputObjectField activationCodeField = newInputObjectField()
-                .name("activationCode")
-                .type(Scalars.GraphQLString)
-                .build();
-        
-        GraphQLInputObjectField languageField = newInputObjectField()
-                .name("language")
-                .type(Scalars.GraphQLString)
-                .build();
 
-        List<GraphQLInputObjectField> inputFields = Arrays.asList(emailField, passwordField, firstNameField, lastNameField, homePageField, phoneNumberField, streetAddressField, zipCodeField, cityField, countryField, tokenField, activationCodeField, languageField);
+        List<GraphQLInputObjectField> inputFields = Arrays.asList(emailField, passwordField, firstNameField, lastNameField, homePageField, phoneNumberField, streetAddressField, zipCodeField, cityField, countryField);
 
         List<GraphQLFieldDefinition> outputFields = Arrays.asList(getViewerField());
 
@@ -570,8 +555,6 @@ public class Mutations {
             Integer zipCode = (Integer) input.get("zipcode");
             String city = (String) input.get("city");
             String country = (String) input.get("country");
-            String token = (String) input.get("token");
-            String language = (String) input.get("language");
             
             if(email == null || email.isEmpty() || firstname == null || firstname.isEmpty() || lastname == null || lastname.isEmpty()){
             	String fields = "";
@@ -620,7 +603,7 @@ public class Mutations {
             	throw new Error("Requiered fields not filled for address: pleas note that the following fields have to be entered correctly - " + fields);
             }
             
-            UserDto newUser = userService.save(new UserDto(firstname, lastname, email, password, homePage, phoneNumber, new AddressDto(streetAddress, zipCode, city, country), false, token, new AuthorityDto(email, "ROLE_USER"), language));
+            UserDto newUser = userService.save(new UserDto(firstname, lastname, email, password, homePage, phoneNumber, new AddressDto(streetAddress, zipCode, city, country)));
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("clientMutationId", (String) input.get("clientMutationId"));
             result.put("userId", newUser.getId());
@@ -717,32 +700,6 @@ public class Mutations {
                 .name("departmentCountry")
                 .type(Scalars.GraphQLString)
                 .build();
-
-        //Licens
-        GraphQLInputObjectField licensNameField = newInputObjectField()
-                .name("licensName")
-                .type(Scalars.GraphQLString)
-                .build();
-        
-        GraphQLInputObjectField licensDescriptionField = newInputObjectField()
-                .name("licensDescription")
-                .type(Scalars.GraphQLString)
-                .build();
-        
-        GraphQLInputObjectField licensPeriodField = newInputObjectField()
-                .name("licensPeriod")
-                .type(Scalars.GraphQLInt)
-                .build();
-        
-        GraphQLInputObjectField licensQuantityTotalField = newInputObjectField()
-                .name("licensQuantityTotal")
-                .type(Scalars.GraphQLInt)
-                .build();
-        
-        GraphQLInputObjectField productIdField = newInputObjectField()
-                .name("productId")
-                .type(new GraphQLNonNull(GraphQLID))
-                .build();
         
         GraphQLInputObjectField userIdField = newInputObjectField()
                 .name("userId")
@@ -751,8 +708,7 @@ public class Mutations {
         
         List<GraphQLInputObjectField> inputFields = Arrays.asList(companyNameField, companyHomePageField, companyEmailField, companyPhoneNumberField, companyOrganisationNumberField, companyCityField, companyCountryField, companyStreetAddressField, companyZipCodeField,
         														  departmentNameField, departmentEmailField, departmentHomePageField, departmentPhoneNumberField, departmentStreetAddressField, departmentZipCodeField, departmentCityField, departmentCountryField,
-        														  licensNameField, licensDescriptionField, licensPeriodField, licensQuantityTotalField,
-        														  productIdField, userIdField);
+        														  userIdField);
         
         GraphQLFieldDefinition companyEdge = newFieldDefinition()
                 .name("companyEdge")
@@ -776,29 +732,7 @@ public class Mutations {
                 })
                 .build();
         
-        GraphQLFieldDefinition licensEdge = newFieldDefinition()
-                .name("licensEdge")
-                .type(schema.getLicensEdge())
-                .dataFetcher(environment -> {
-                    Map source = (Map) environment.getSource();
-                    String licensId = (String) source.get("licensId");
-                    LicensDto licens = schema.getLicens(licensId);
-                    return new Edge(licens, schema.getSimpleConnectionFromDepartmentToLicens().cursorForObjectInConnection(licens));
-                })
-                .build();
-        
-        GraphQLFieldDefinition activatedLicensEdge = newFieldDefinition()
-                .name("activatedLicensEdge")
-                .type(schema.getActivatedLicensEdge())
-                .dataFetcher(environment -> {
-                    Map source = (Map) environment.getSource();
-                    String activatedLicensId = (String) source.get("activatedLicensId");
-                    ActivatedLicensDto activatedLicens = schema.getActivatedLicens(activatedLicensId);
-                    return new Edge(activatedLicens, schema.getSimpleConnectionFromUserToActivatedLicens().cursorForObjectInConnection(activatedLicens));
-                })
-                .build();
-        
-        List<GraphQLFieldDefinition> outputFields = Arrays.asList(companyEdge, departmentEdge, licensEdge, activatedLicensEdge, getViewerField());
+        List<GraphQLFieldDefinition> outputFields = Arrays.asList(companyEdge, departmentEdge, getViewerField());
         
         DataFetcher mutate = environment -> {
         	//Company
@@ -827,18 +761,7 @@ public class Mutations {
             String graphQLUserId = (String) input.get("userId");
             String userId = schema.getRelay().fromGlobalId(graphQLUserId).getId();
             
-            //Licens
-            String graphQLProductId = (String) input.get("productId");
-            String productId = schema.getRelay().fromGlobalId(graphQLProductId).getId();
-            String licensName = (String) input.get("licensName");
-            String licensDescription = (String) input.get("licensDescription");
-            Integer licensPeriod = (Integer) input.get("licensPeriod");
-            Integer licensQuantityTotal = (Integer) input.get("licensQuantityTotal");
-            Date creationDate = null;
-            Date expireDate = null;
-            
-            //Creating and saving Objects
-            
+            //Creating and saving Objects            
             if(companyName == null || companyName.isEmpty() || companyOrganisationNumber == null || companyOrganisationNumber.isEmpty()){
             	String fields = "";
             	if(companyName == null || companyName.isEmpty())
@@ -920,43 +843,15 @@ public class Mutations {
             DepartmentDto department = new DepartmentDto(company, departmentName, departmentAddress, departmentHomePage, departmentEmail, departmentPhoneNumber);
             department.addUser(user);
             department = departmentService.save(department);
-            
-            if(licensPeriod == null || licensQuantityTotal == null){
-            	String fields = "";
-            	if(licensPeriod == null)
-            		fields = "licensPeriod";
-            	if(licensQuantityTotal == null){
-            		if(fields.isEmpty())
-            			fields = "quantityTotal";
-            		else
-            			fields = fields + ", quantityTotal";
-            	}
-            	throw new Error("Requiered fields not filled for licens: pleas note that the following fields have to be entered correctly - " + fields);
-            }         
-            //Licens
-            ProductDto product = schema.getProduct(productId);
-            LicensDto licens = new LicensDto(licensName, licensDescription, department, licensPeriod, 3, licensPeriod, licensQuantityTotal, product, UUID.randomUUID().toString(), creationDate, expireDate, user);
-            licens.setDepartment(department);
-            licens = licensService.save(licens);
-            
-			//ActivatedLicens
-			ActivatedLicensDto activatedLicens = new ActivatedLicensDto(licens, user, new Date());
-			activatedLicens = activatedLicensService.save(activatedLicens);
-			user.addActivatedLicensList(activatedLicens);
-			user = userService.save(user);
 			
             String companyId = String.valueOf(company.getId());
             String departmentId = String.valueOf(department.getId());
             userId = String.valueOf(user.getId());
-            String licensId = String.valueOf(licens.getId());
-			String activatedLicensId = String.valueOf(activatedLicens.getId());
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("clientMutationId", (String) input.get("clientMutationId"));
             result.put("companyId", companyId);
             result.put("departmentId", departmentId);
             result.put("userId", userId);
-            result.put("licensId", licensId);
-            result.put("activatedLicensId", activatedLicensId);
             return result;
         };
 

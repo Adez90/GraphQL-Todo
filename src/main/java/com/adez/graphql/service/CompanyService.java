@@ -7,7 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.adez.graphql.model.dto.CompanyDto;
+import com.adez.graphql.model.dto.UserDto;
 import com.adez.graphql.model.entity.CompanyEntity;
+import com.adez.graphql.model.entity.DepartmentEntity;
+import com.adez.graphql.model.entity.UserEntity;
 import com.adez.graphql.repository.CompanyRepository;
 
 @Service
@@ -53,5 +56,32 @@ public class CompanyService {
 		companyDto = modelMapper.map(companyEntity, CompanyDto.class);
 		
 		return companyDto;
+	}
+	
+	public ArrayList<CompanyDto> getByUser(UserDto userDto){
+		UserEntity userEntity = modelMapper.map(userDto, UserEntity.class);
+		ArrayList <DepartmentEntity> departmentEntitys = (ArrayList<DepartmentEntity>) userEntity.getDepartments();
+		
+		companyEntitys = new ArrayList<CompanyEntity>();
+		companyDtos = new ArrayList<CompanyDto>();
+		
+		if(departmentEntitys != null){
+			for(int i = 0; i < departmentEntitys.size(); i++){
+				companyEntitys.add(departmentEntitys.get(i).getCompany());
+			}
+			if(companyEntitys != null){
+				for(int i = 0; i < companyEntitys.size(); i++){
+					companyDto = modelMapper.map(companyEntitys.get(i), CompanyDto.class);
+					companyDtos.add(companyDto);
+				}
+				return companyDtos;
+			}
+			else{
+				return null;
+			}
+		}
+		else{
+			return null;
+		}
 	}
 }
