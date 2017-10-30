@@ -1,12 +1,31 @@
-package com.adez.graphql.model.dto;
+package com.adez.graphql.model.entity;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
-public class CompanyDto {
+import org.hibernate.validator.constraints.NotEmpty;
+
+@Entity
+@Table(name ="company")
+public class CompanyEntity {
+	@Id
+	@Column(name="comp_id", updatable=false)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
 	private String companyName;
 	
-	private AddressDto companyAddress;
+	@ManyToOne(optional=true, fetch=FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name="address_id", referencedColumnName="address_id")
+	private AddressEntity companyAddress;
 	
 	private String companyHomePage;
 	
@@ -14,12 +33,14 @@ public class CompanyDto {
 	
 	private String companyPhoneNumber;
 	
-	private String organisationNumber;
+	@Column(name="organisation_number", unique=true)
+	@NotEmpty
+	private String organisationNumber;	
 
-	public CompanyDto() {
+	public CompanyEntity() {
 	}
 	
-	public CompanyDto(String name, AddressDto address,
+	public CompanyEntity(String name, AddressEntity address,
 			String homePage, String email, String phoneNumber, String organisationNumber) {
 		this.companyName = name;
 		this.companyAddress = address;
@@ -29,25 +50,8 @@ public class CompanyDto {
 		this.organisationNumber = organisationNumber;
 	}
 	
-	public CompanyDto(String companyName, String organisationNumber, AddressDto address, String email, String phoneNumber, String homePage) {
-		this.companyName = companyName;
-		this.organisationNumber = organisationNumber;
-		this.companyAddress = address;
-		this.companyEmail = email;
-		this.companyPhoneNumber = phoneNumber;
-		this.companyHomePage = homePage;
-	}
-	
-	public CompanyDto(String companyName, String organisationNumber, String email, String phoneNumber, String homePage) {
-		this.companyName = companyName;
-		this.organisationNumber = organisationNumber;
-		this.companyEmail = email;
-		this.companyPhoneNumber = phoneNumber;
-		this.companyHomePage = homePage;
-	}
-	
-	public CompanyDto(String companyName, String organisationNumber, String email, String phoneNumber) {
-		this.companyName = companyName;
+	public CompanyEntity(String name, String organisationNumber, String email, String phoneNumber) {
+		this.companyName = name;
 		this.organisationNumber = organisationNumber;
 		this.companyEmail = email;
 		this.companyPhoneNumber = phoneNumber;
@@ -69,11 +73,11 @@ public class CompanyDto {
 		this.companyName = name;
 	}
 
-	public AddressDto getCompanyAddress() {
+	public AddressEntity getcompanyAddress() {
 		return companyAddress;
 	}
 
-	public void setCompanyAddress(AddressDto address) {
+	public void setCompanyAddress(AddressEntity address) {
 		this.companyAddress = address;
 	}
 
@@ -111,7 +115,8 @@ public class CompanyDto {
 
 	@Override
 	public String toString() {
-		return "CompanyDto [name=" + companyName + ", address=" + companyAddress + ", homePage=" + companyHomePage + ", email=" + companyEmail + ", phoneNumber="
+		return "CompanyEntity [name=" + companyName + ", address=" + companyAddress + ", homePage=" 
+				+ companyHomePage + ", email=" + companyEmail + ", phoneNumber="
 				+ companyPhoneNumber + ", organisationNumber=" + organisationNumber + "]";
 	}
 }

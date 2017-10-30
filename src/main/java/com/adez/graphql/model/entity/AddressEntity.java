@@ -1,36 +1,48 @@
-package com.adez.graphql.model.dto;
+package com.adez.graphql.model.entity;
 
-public class AddressDto {
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+
+@Entity
+@Table(name ="address")
+public class AddressEntity {
+	@Id
+	@Column(name="address_id", updatable=false)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@Column(nullable=false) 
+	@NotNull
 	private String streetAddress;
 	
+	@Column(nullable=false) 
+	@NotNull
 	private int zipCode;
-
+	
+	@Column(nullable=false) 
+	@NotNull
 	private String city;
-
+	
+	@Column(nullable=false) 
+	@NotNull
 	private String country;
 	
 	private String countryCode;
 	
-	public AddressDto() {		
+	public AddressEntity() {		
 	}
 	
-	public AddressDto(String streetAddress, int zipCode, String city, String country, String countryCode) {
+	public AddressEntity(String streetAddress, int zipCode, String city, String country, String countryCode) {
 		this.streetAddress = streetAddress;
 		this.zipCode = zipCode;
 		this.city = city;
 		this.country = country;
 		this.countryCode = countryCode;
-	}
-	
-	public AddressDto(String streetAddress, Integer zipCode, String city,
-			String country) {
-		this.streetAddress = streetAddress;
-		this.zipCode = zipCode;
-		this.city = city;
-		this.country = country;
-		countryCode = country.substring(0, Math.min(country.length(), 3));
 	}
 
 	public Long getId(){
@@ -83,7 +95,7 @@ public class AddressDto {
 	
 	@Override
 	public String toString() {
-		return "AddressDto [streetAddress=" + streetAddress + ", zipCode=" + zipCode + ", city=" + city 
+		return "AddressEntity [streetAddress=" + streetAddress + ", zipCode=" + zipCode + ", city=" + city 
 				+ ", country=" + country + ", countryCode=" + countryCode + "]";
 	}
 }
