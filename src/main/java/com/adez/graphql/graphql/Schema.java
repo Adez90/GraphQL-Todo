@@ -418,7 +418,7 @@ public class Schema {
                 .type(Scalars.GraphQLBoolean)
                 .dataFetcher(environment -> {
                     Connection connection = (Connection) environment.getSource();
-                    return (int) connection.getEdges().stream().filter(edge -> ((TodoDto) edge.getNode()).isDone()).count();
+                    return (int) connection.getEdges().stream().filter(edge -> ((TodoDto) edge.getNode()).getIsDone()).count();
                 })
                 .build();
         GraphQLFieldDefinition all = newFieldDefinition()
