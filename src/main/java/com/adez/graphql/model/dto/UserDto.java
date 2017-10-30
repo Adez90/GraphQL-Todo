@@ -1,5 +1,5 @@
 package com.adez.graphql.model.dto;
 
-public class CompanyDTO {
+public class UserDto {
 
 }
